@@ -1,0 +1,14 @@
+elearning-authentication-service
+.elearning-authentication-service/*
+
+elearning-cms
+.elearning-cms/*
+
+elearning-core-service
+.elearning-core-service/*
+
+elearning-fe
+.elearning-fe/*
+
+elearning-mobile-app
+.elearning-mobile-app/*
