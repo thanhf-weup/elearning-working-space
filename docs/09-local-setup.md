@@ -208,6 +208,33 @@ module-not-found error:
 | `npm run test:i18n` | `test-i18n.sh` (it is in the **auth** repo) | — |
 | `npm run frontend` | `frontend/server.js` | — |
 
+### payment-service (only for online checkout and IAP)
+
+core runs without it. Only Payoo/PayPal/VietQR checkout and IAP verify/sync fail, and they fail at
+call time. Start it when you touch payments or in-app purchase.
+
+```bash
+cd elearning-payment
+git checkout develop          # clone default feat/payment has no IAP code
+npm install
+cp .env.example .env          # API_PORT=3436 — keep it off core's 3435
+npm run db:migrate            # creates Postgres schema `payment` (3 tables)
+npm run start:dev
+```
+
+Set these in core's `.env` so the two services can talk:
+
+| core `.env` | payment `.env` | Notes |
+|---|---|---|
+| `PAYMENT_SERVICE_URL=http://localhost:3436/api/v1/payment-service` | — | that is also core's default |
+| `IAP_INTERNAL_SERVICE_KEY` | `IAP_INTERNAL_SERVICE_KEY` | **must be identical**, or every verify call returns 401 |
+| `RABBITMQ_URL` | `RABBITMQ_URL` (default `amqp://localhost:5672`) | both need the same broker for `payment.events` |
+
+Store credentials (`APPLE_IAP_*`, `APPLE_CONNECT_*`, `GOOGLE_IAP_*`) are only needed for real store
+calls. Locally you can't receive store webhooks without a public tunnel, and Pub/Sub push also needs
+`GOOGLE_IAP_PUBSUB_AUDIENCE` to match the push subscription. Mobile setup and testing are covered in
+`elearning-mobile-app/docs/implementation/iap-{android,ios}.md`.
+
 ---
 
 ## 4. elearning-cms
@@ -313,6 +340,7 @@ you need `android/key.properties` and a real keystore before shipping.
 | Service | Code default | Dockerfile | Elsewhere |
 |---|---|---|---|
 | core-service | **3435** | 3435 | `docker-compose.yml` publishes **4001:4001** |
+| payment-service | **3436** | **5005** | `docker-compose.yml` publishes **4001:4001**; README / AGENTS.md say 3435 |
 | auth-service | **8000** | **5001** | — |
 | cms | **4000** (`env/.env`) | nginx :80 | root `.env` says 8002 |
 | fe web | **3000** | **8001** | — |
@@ -331,6 +359,7 @@ you need `android/key.properties` and a real keystore before shipping.
 |---|---|
 | core-service Swagger | `http://localhost:3435/api/v1/coreservice/docs` |
 | auth-service Swagger | `http://localhost:8000/api/v1/auth/docs` |
+| payment-service Swagger | `http://localhost:3436/api/v1/payment-service/docs` |
 | BullMQ dashboard | `http://localhost:3435/admin/queues` — **unauthenticated** |
 | RabbitMQ management | `http://localhost:15672` (guest/guest) |
 

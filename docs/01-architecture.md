@@ -313,12 +313,69 @@ are all generated. A fresh clone does not compile until `make setup`.
 
 ---
 
-## 6. Deployment
+## 6. elearning-payment — NestJS, hexagonal-lite
+
+`elearning-payment` (payment-service) sits behind core-service. It owns everything that talks to a
+payment provider or an app store. **Read it on `origin/develop`.** The clone default `feat/payment`
+is 28 commits behind and has no IAP code.
+
+```
+src/
+  domain/          iap/, payment/, webhook/: entities, ports, the IAP message contract
+  application/     iap/ (use-cases, mappers), payment/ (use-cases, cron)
+  infrastructure/  adapters/{iap,payoo,paypal,vietqr,vnpay}, persistence, message-brokers, config
+  presentation/    http/rest/{payment,iap}, guards/
+```
+
+Prefix `api/v1/payment-service`, code default port **3436**, Swagger at `/api/v1/payment-service/docs`.
+Tables live in their own Postgres schema `payment`: `payments`, `iap_verifications`,
+`iap_notification_logs`. Its migrations (`src/infrastructure/databases/migrations`) are separate from
+core's.
+
+### Who calls it, and how it is guarded
+
+| Route | Caller | Guard |
+|---|---|---|
+| `POST payments/create-url` | core (Payoo/PayPal/VietQR checkout) | **none**: `@Public()` bypasses the global `PermissionsGuard`. Reachability depends on the gateway. |
+| `POST payments/payoo/ipn`, `paypal/webhook`, `vietqr/...`, `:provider/callback` | payment gateways | provider-specific (Payoo SHA-512 checksum, VietQR JWT) |
+| `POST payments/iap/{apple,google}/verify` | core | `InternalServiceKeyGuard` (`X-Internal-Service-Key`) |
+| `POST payments/iap/{apple,google}/products` | core (store product sync) | `InternalServiceKeyGuard` |
+| `POST payments/iap/apple/notifications` | App Store Server Notifications V2 | JWS chain verified in-app (`LenientAppleNotificationVerifier`) |
+| `POST payments/iap/google/notifications` | Google RTDN via Pub/Sub push | `GooglePubSubOidcGuard` (OIDC `aud` = `GOOGLE_IAP_PUBSUB_AUDIENCE`) |
+
+Outbound, it publishes to RabbitMQ exchange `payment.events` (`payment.success`, `payment.failed`,
+`payment.refunded`, `payment.iap.notified`), and core consumes them.
+
+### IAP division of labour
+
+payment-service does **store I/O only**: it verifies the transaction with Apple/Google, acknowledges
+on Google, checks webhook signatures, and creates or prices store products. It does **not** know who
+the user is or what the product grants. core-service owns the product mapping, ownership check,
+market resolution, order and enrollment. See [`10-iap.md`](10-iap.md).
+
+### Things to know before changing it
+
+- **The IAP message contract is duplicated.** `src/domain/iap/contracts/iap-notification-message.contract.ts`
+  mirrors core's file of the same name. Change both, or core silently drops messages.
+- **Store webhooks are one-time-purchase only.** The notification mappers return `null`, so nothing
+  is published, for every subscription notification type. This is intentional, but it is the first
+  thing subscriptions must change.
+- **Apple environment is a single env var.** `APPLE_IAP_ENVIRONMENT` picks Production or Sandbox,
+  with no fallback.
+- **`app-store-server-library@0.1.3` is behind Apple.** Its enum lacks `ONE_TIME_CHARGE`, hence the
+  lenient verifier. That verifier still does full X.509 + signature verification and only relaxes the
+  enum check.
+- **The repo's own README is a copy of core's** and its AGENTS.md gives the wrong port. Trust `src/`.
+
+---
+
+## 7. Deployment
 
 | Project | How it ships |
 |---|---|
 | core-service | GitHub Actions on push to `develop` → build, tar, SCP to staging, **PM2 restart**. No test, lint or migration step. |
 | auth-service | No workflow. `Makefile` builds and pushes to `registry.weupbook.com/auth-service`. |
+| payment-service | GitHub Actions (`deploy-develop.yml`) → build, tar, SCP, **PM2 restart `payment-service`** (same shape as core). Docker image via `Makefile` to `registry.weupbook.com`. |
 | cms | Actions on push to `develop` → `vite build` → SCP `dist` to an nginx path. Docker image via `Makefile`. |
 | fe | Actions on push to `dev` → `build:web` → repackage the standalone bundle → SCP. **Two images per release** (`.com` and `.vn`) because `NEXT_PUBLIC_*` is inlined at build time. |
 | mobile | `make build-apk ENV=prod` / `build-appbundle` / `build-ios`, all obfuscated with split debug info. CI runs the full check gate on PRs to `main`. |

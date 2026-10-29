@@ -1,6 +1,6 @@
 # WEUP E-Learning — Workspace Guide
 
-This directory is a **workspace, not a repository**. It holds five independent git repos that
+This directory is a **workspace, not a repository**. It holds six independent git repos that
 together make up the WEUP e-learning platform (weupbook.com). There is no root `package.json`,
 no workspaces field, no shared types package, and no root `.git` — each sub-directory is its own
 repo with its own branch, lockfile and release pipeline.
@@ -11,16 +11,17 @@ cannot hold a single editing session (or a single AI agent) across the boundary,
 merge a client change that depends on an endpoint which has not shipped yet.
 
 > **New here? Read [`docs/README.md`](docs/README.md) next.** It contains the ordered, checkable
-> procedure for shipping a feature across all five repos.
+> procedure for shipping a feature across the repos.
 
 ---
 
-## 1. The five projects
+## 1. The six projects
 
 | Directory | Stack | Role | Dev port |
 |---|---|---|---|
 | [`elearning-authentication-service`](elearning-authentication-service/) | **Fastify 5** + TypeScript + Drizzle | Credentials, Google OAuth, OTP, password reset, RBAC tables. **The only service that issues JWTs.** | `8000` |
 | [`elearning-core-service`](elearning-core-service/) | **NestJS 11** (hexagonal) + Drizzle + BullMQ | All product domain: catalog, courses, ebooks, audiobooks, podcasts, orders, cart, blog, recruitment, POS. | `3435` |
+| [`elearning-payment`](elearning-payment/) | **NestJS 11** + Drizzle + RabbitMQ | Payment gateways (Payoo, PayPal, VietQR) and Apple/Google in-app purchase: store verification, store webhooks, store product sync. Called only by core-service and by external providers, never by clients. See [§5.5](#55-core--payment-service). | `3436` |
 | [`elearning-cms`](elearning-cms/) | **Vite + React 19 + Ant Design 6** (SPA) | Internal back-office for admins, content editors and operators. | `4000` |
 | [`elearning-fe`](elearning-fe/) | **Turborepo + Next.js 16** (App Router) | Consumer storefront `apps/web`; B2B partner portal `apps/workspace` (early scaffold). | `3000` / `3001` |
 | [`elearning-mobile-app`](elearning-mobile-app/) | **Flutter 3.41 + Riverpod 3** | iOS + Android learner app. Web is explicitly out of scope. | — |
@@ -37,7 +38,11 @@ trusting this table after a few months:
 | Tests | 137 Jest specs | 2 Vitest files | **none** | **none** | full suite + coverage gate |
 | Locales | 8 | 2 | **none** | 9 | 9 |
 
-Every project ships its own package manager lockfile. All four Node projects use **npm**. Node
+payment-service is small: 3 controllers, 3 tables in its own Postgres schema `payment`
+(`payments`, `iap_verifications`, `iap_notification_logs`), 3 migrations, 22 Jest specs, `en`/`vi`
+locales (counted on `origin/develop` at `79e387f`).
+
+Every project ships its own package manager lockfile. All five Node projects use **npm**. Node
 versions disagree between local and CI — see §8.
 
 ---
@@ -252,10 +257,29 @@ core reads `REDIS_URL`/`REDIS_HOST`/`REDIS_PORT` — **different variable names 
 instance.** If they diverge, cross-service blacklisting stops working silently, and auth's
 in-memory `Map` fallback hides the failure completely in dev.
 
-### 5.5 Not in this workspace
+### 5.5 core ↔ payment-service
 
-`PAYMENT_SERVICE_URL` (default `http://localhost:3436/api/v1/payment-service`) publishes to a
-`payment.events` exchange that core consumes. The mobile app's Studio AI features hit a separate
+core reaches payment-service at `PAYMENT_SERVICE_URL` (default
+`http://localhost:3436/api/v1/payment-service`). No client calls it directly. Only core, the
+gateways (Payoo IPN, PayPal webhook, VietQR sync) and the stores (Apple Server Notifications,
+Google RTDN through Pub/Sub) do.
+
+- **HTTP, core → payment.** Gateway checkout through `POST payments/create-url`. IAP through
+  `POST payments/iap/{apple|google}/verify` and `POST payments/iap/{apple|google}/products`
+  (store product sync). The IAP routes are guarded by the `X-Internal-Service-Key` shared secret.
+  `IAP_INTERNAL_SERVICE_KEY` must match in both repos.
+- **RabbitMQ, payment → core.** Exchange `payment.events`, routing keys `payment.success`,
+  `payment.failed`, `payment.refunded` and `payment.iap.notified`. The IAP message contract is
+  duplicated by hand in both repos (`iap-notification-message.contract.ts`), so a change to one
+  copy must be made to the other.
+- **Branch.** Clone default is `feat/payment`, which is **28 commits behind `origin/develop`** and has
+  no IAP code at all. Check out `develop` before reading or running anything IAP-related.
+
+Cross-repo IAP flows and the subscription gap: [`docs/10-iap.md`](docs/10-iap.md).
+
+### 5.6 Not in this workspace
+
+The mobile app's Studio AI features hit a separate
 Notebook host (`NOTEBOOK_API_BASE_URL`) using the same auth-service tokens. External integrations
 include LadiSales, Shopify, Payoo, PayPal, Pancake POS, Base.vn, Telegram, Mailjet, Google Sheets,
 GeoNames and Open Exchange Rates.
@@ -296,6 +320,7 @@ cd elearning-mobile-app && make setup && make run ENV=dev
 | Service | Code default | Dockerfile | compose / other |
 |---|---|---|---|
 | core-service | **3435** | 3435 | `docker-compose.yml` publishes **4001:4001** |
+| payment-service | **3436** | **5005** | `docker-compose.yml` publishes **4001:4001**; its README and AGENTS.md say 3435 |
 | auth-service | **8000** | **5001** | — |
 | cms | 4000 (`env/.env`) | nginx :80 | root `.env` says 8002 (Makefile only) |
 | web | 3000 | **8001** | — |
@@ -307,6 +332,7 @@ cd elearning-mobile-app && make setup && make run ENV=dev
 
 - core-service Swagger: `http://localhost:3435/api/v1/coreservice/docs`
 - auth-service Swagger: `http://localhost:8000/api/v1/auth/docs`
+- payment-service Swagger: `http://localhost:3436/api/v1/payment-service/docs`
 - BullMQ dashboard: `http://localhost:3435/admin/queues` — **unauthenticated, and outside the
   global prefix.** So is `/docs`; `PermissionsGuard` allows any path *containing* `/docs`.
 
@@ -391,6 +417,8 @@ its Dockerfile uses Node 22 while its CI workflow uses Node 20. Mobile pins Flut
 | [`docs/07-guide-mobile.md`](docs/07-guide-mobile.md) | Add a Flutter feature (worked example: blog) |
 | [`docs/08-walkthrough-new-feature.md`](docs/08-walkthrough-new-feature.md) | One feature traced through all five repos |
 | [`docs/09-local-setup.md`](docs/09-local-setup.md) | Getting everything running, with the env vars that actually work |
+| [`docs/10-iap.md`](docs/10-iap.md) | In-app purchase across mobile → core → payment → stores: what works, what's missing for subscriptions |
+| [`docs/11-iap-subscription-guide.md`](docs/11-iap-subscription-guide.md) | Step-by-step guide: membership plans as auto-renewable store subscriptions |
 
 ### Per-repo docs worth trusting
 
@@ -412,7 +440,8 @@ its Dockerfile uses Node 22 while its CI workflow uses Node 20. Mobile pins Flut
 | `elearning-core-service/CLAUDE.md` and `AGENT.md` (byte-identical) | Document a **CQRS architecture that was removed**: `CommandBus`, `QueryBus`, a `src/core/` directory. None exist. The `@core/*` tsconfig alias points at nothing. Its "Adding New Features" steps name files that no longer exist. |
 | `elearning-authentication-service/AGENTS.md` | Claims strict ESM, `src/routes/`, `src/lib/`, a placeholder `npm test`. Reality: CommonJS, `src/controllers/`, `src/services/`, Vitest. |
 | `elearning-mobile-app/ARCHITECTURE.md` §2.1 / §14, `README.md` §3 | Wrong Android `applicationId`, lists 9 features where there are 19, and says screens "still use mock data" — largely untrue now. |
+| `elearning-payment/README.md` and `AGENTS.md` | README is a copy of core's (lists users, catalog, surveys) and claims CQRS; neither mentions IAP. Both give port 3435, but the code defaults to **3436**. Read `src/` on `develop` instead. |
 | Any use-case / table count in an existing doc | core's README says 153 use cases / 46 tables; its wiki says 222 / 60. Actual: **275 / 68**. |
 
-**These files are not modified by this documentation set** — they live in five separate repos on
+**These files are not modified by this documentation set** — they live in separate repos on
 active feature branches. Fixing them is its own PR in each repo. Until then, prefer the source.

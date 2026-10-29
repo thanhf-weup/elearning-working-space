@@ -12,3 +12,6 @@ elearning-fe
 
 elearning-mobile-app
 .elearning-mobile-app/*
+
+elearning-payment
+.elearning-payment/*
