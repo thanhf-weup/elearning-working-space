@@ -176,3 +176,4 @@ Ranked by how much time each costs, from experience visible in the codebase.
 | [`09-local-setup.md`](09-local-setup.md) | Running everything locally |
 | [`10-iap.md`](10-iap.md) | In-app purchase across mobile, core and payment-service; subscription gap |
 | [`11-iap-subscription-guide.md`](11-iap-subscription-guide.md) | Step-by-step: membership plans as auto-renewable subscriptions on iOS + Android |
+| [`13-subscription-ops/`](13-subscription-ops/README.md) | Operations runbook (Vietnamese): CMS plan setup, store checks and review, web change, reconciliation, go-live checklist |
