@@ -411,6 +411,11 @@ recreate them.** Subscription events use the same URLs and topic.
 - [ ] Kill the app after paying, before verify → verify/finish on next launch; Google auto-refunds if the grant never happens (3-day acknowledge)
 - [ ] iOS renewal on a second device with no saved context → verified via SKU, finished
 - [ ] Account A buys, B logs in on the same device → B gets nothing
+- [ ] iOS: B logs in on an Apple ID that holds A's subscription and taps a different plan → blocked before StoreKit opens (Apple would otherwise upgrade A's chain)
+- [ ] iPhone buys 1M (auto-renew on) → Android shows "managed in App Store", purchase disabled; reverse direction (Android → iPhone) likewise
+- [ ] Same WeUp user, second Apple ID / Gmail while the first subscription auto-renews → blocked in the app; forced verify → `rejected_cross_channel` (`reason: store_auto_renew`) + alert, Google revoked
+- [ ] Turn off auto-renew on store A, then buy on store B → allowed; sheet shows the loss notice; core keeps 2 live rows, status shows store B
+- [ ] Turn off auto-renew and buy immediately (webhook not yet in) → core re-reads store A and accepts
 - [ ] Payoo member → store purchase blocked in the app; forced verify → `rejected_cross_channel` + alert
 - [ ] Restore on a fresh install (iOS) → membership visible
 - [ ] Unsupported region → `unsupportedRegion`

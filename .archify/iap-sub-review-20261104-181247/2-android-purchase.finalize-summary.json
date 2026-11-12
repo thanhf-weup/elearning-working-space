@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "sequence",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/android.json",
+    "sha256": "aa97d7ef7cc89641ea5bac334c6f7a84d46d6770fceb310c38fa9da99a310a27",
+    "bytes": 5561
+  },
+  "artifact": {
+    "path": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/2-android-purchase.html",
+    "sha256": "4531376fb9947ac7d20c7a0414ba4c310aa6bd50c7aa8bfc69688e043ce4c65f",
+    "bytes": 847557
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/2-android-purchase.finalize.json",
+    "summaryReceipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/2-android-purchase.finalize-summary.json",
+    "browserCheckReceipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/2-android-purchase.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-04T11:14:08.225Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 2680,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

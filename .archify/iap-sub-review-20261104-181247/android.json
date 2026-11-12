@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Android Subscription Purchase & Renewal",
+    "subtitle": "Plan SKU from google_play_product_id + google_play_base_plan_id · weup.membership.1m/monthly-1 · .3m/monthly-3",
+    "output": ".archify/iap-sub-review-20261104-181247/2-android-purchase.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "default": { "label": "Exists today (one-time IAP)" },
+        "emphasis": { "label": "New / changed for subscriptions" },
+        "security": { "label": "Internal call (X-Internal-Service-Key)" },
+        "dashed": { "label": "Async: RTDN / Pub/Sub / RabbitMQ" },
+        "return": { "label": "Response" }
+      }
+    }
+  },
+  "participants": [
+    { "id": "app", "type": "frontend", "label": "WeUp App", "sublabel": "Flutter · Billing 8" },
+    { "id": "core", "type": "backend", "label": "core-service", "sublabel": "plans · memberships" },
+    { "id": "payment", "type": "backend", "label": "payment-service", "sublabel": "Play adapter" },
+    { "id": "mq", "type": "messagebus", "label": "RabbitMQ", "sublabel": "payment.events" },
+    { "id": "pubsub", "type": "cloud", "label": "Pub/Sub", "sublabel": "iap-rtdn → staging" },
+    { "id": "play", "type": "external", "label": "Google Play", "sublabel": "Billing · Dev API" }
+  ],
+  "segments": [
+    { "from": 160, "to": 320, "label": "1 · Paywall" },
+    { "from": 330, "to": 860, "label": "2 · Purchase → verify → grant → acknowledge" },
+    { "from": 870, "to": 1220, "label": "3 · Renewal / lifecycle" }
+  ],
+  "messages": [
+    { "id": "plans", "from": "app", "to": "core", "y": 200, "label": "GET /subscription/plans", "variant": "emphasis", "note": "+ googlePlayProductId, basePlanId, storeLevel" },
+    { "id": "query", "from": "app", "to": "play", "y": 255, "label": "queryProductDetails(subs)", "variant": "emphasis" },
+    { "id": "prices", "from": "play", "to": "app", "y": 287, "label": "base plan price + period", "variant": "return" },
+    { "id": "buy", "from": "app", "to": "play", "y": 375, "label": "launchBillingFlow(SKU, obfuscatedAccountId=userId)", "variant": "emphasis", "note": "Plan change → changeSubscriptionParam" },
+    { "id": "token", "from": "play", "to": "app", "y": 430, "label": "Purchase (purchaseToken)", "variant": "return" },
+    { "id": "verify", "from": "app", "to": "core", "y": 465, "label": "POST /iap/google/verify {productType: subscription}", "variant": "emphasis" },
+    { "id": "pverify", "from": "core", "to": "payment", "y": 500, "label": "POST /payments/iap/google/verify", "variant": "security" },
+    { "id": "subget", "from": "payment", "to": "play", "y": 535, "label": "purchases.subscriptionsv2.get", "variant": "emphasis" },
+    { "id": "sub", "from": "play", "to": "payment", "y": 567, "label": "state, expiryTime, linkedPurchaseToken", "variant": "return" },
+    { "id": "verified", "from": "payment", "to": "core", "y": 602, "label": "verified (NOT acknowledged)", "variant": "return", "note": "owner = obfuscatedAccountId · plan by SKU · chain via linkedPurchaseToken · order per latestSuccessfulOrderId" },
+    { "id": "ok", "from": "core", "to": "app", "y": 690, "label": "200 membership active", "variant": "return" },
+    { "id": "ack", "from": "core", "to": "payment", "y": 725, "label": "acknowledge after commit", "variant": "security", "note": "Rejected → revoke(fullRefund)" },
+    { "id": "ackplay", "from": "payment", "to": "play", "y": 790, "label": "purchases.subscriptions.acknowledge", "variant": "emphasis" },
+    { "id": "rtdn", "from": "play", "to": "pubsub", "y": 900, "label": "RTDN subscriptionNotification", "variant": "dashed" },
+    { "id": "push", "from": "pubsub", "to": "payment", "y": 935, "label": "push (OIDC)", "variant": "dashed", "note": "RENEWED · CANCELED · IN_GRACE · ON_HOLD · EXPIRED · REVOKED" },
+    { "id": "reread", "from": "payment", "to": "play", "y": 1005, "label": "re-read subscriptionsv2.get", "variant": "emphasis" },
+    { "id": "state", "from": "play", "to": "payment", "y": 1037, "label": "latest state", "variant": "return" },
+    { "id": "pub", "from": "payment", "to": "mq", "y": 1072, "label": "payment.iap.notified (SUB_*)", "variant": "dashed", "note": "dedupe Pub/Sub messageId · contract v2" },
+    { "id": "consume", "from": "mq", "to": "core", "y": 1135, "label": "extend / grace / auto_renew / revoke", "variant": "dashed" },
+    { "id": "status", "from": "app", "to": "core", "y": 1190, "label": "GET /subscription/status", "variant": "default" }
+  ],
+  "activations": [
+    { "participant": "core", "from": 460, "to": 730, "type": "backend" },
+    { "participant": "payment", "from": 495, "to": 607, "type": "backend" },
+    { "participant": "payment", "from": 720, "to": 795, "type": "backend" },
+    { "participant": "payment", "from": 930, "to": 1077, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Keys", "items": ["User binding: obfuscatedAccountId = WeUp userId", "Chain key: first purchaseToken (follow linkedPurchaseToken)", "Period id: latestSuccessfulOrderId (token repeats across renewals)"] },
+    { "dot": "orange", "title": "Store settings in place", "items": ["Base plans monthly-1 / monthly-3 Active", "Grace 7 d + account hold 53 d", "Pause disabled · RTDN topic iap-rtdn"] },
+    { "dot": "rose", "title": "Edge rules", "items": ["Not acknowledged in 3 days → Google refunds + revokes", "Cancel in Play = auto-renew off; access until expiry", "Revoked / refunded → terminate now"] }
+  ]
+}

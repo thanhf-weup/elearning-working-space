@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "sequence",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/plan-change.json",
+    "sha256": "25fdcf65b96bf840aea8b19c1edf357ad151fda11b6e26021c8fe34340d0caf3",
+    "bytes": 4161
+  },
+  "artifact": {
+    "path": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/4-plan-change.html",
+    "sha256": "70bdf0e12098bc42aa993aa51420b8c6740a5add7bc71b67bd12032d8819fa86",
+    "bytes": 839277
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/4-plan-change.finalize.json",
+    "summaryReceipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/4-plan-change.finalize-summary.json",
+    "browserCheckReceipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/4-plan-change.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-04T11:14:08.225Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 1553,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

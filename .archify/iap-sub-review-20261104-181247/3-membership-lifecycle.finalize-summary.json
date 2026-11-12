@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "lifecycle",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/lifecycle.json",
+    "sha256": "af8e7e49610e852f7adfaf2bb5fefc318364c1c6d7fcc0bf7367010dd937ccb1",
+    "bytes": 4970
+  },
+  "artifact": {
+    "path": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/3-membership-lifecycle.html",
+    "sha256": "2ecb2785b716f9bc287f3af8e2975a9d0447af8dc01604a98420da319012c728",
+    "bytes": 854491
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/3-membership-lifecycle.finalize.json",
+    "summaryReceipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/3-membership-lifecycle.finalize-summary.json",
+    "browserCheckReceipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/3-membership-lifecycle.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-04T11:14:08.225Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 1516,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  },
+  "visualReviewRecommendation": {
+    "action": "inspect-route-readability",
+    "signals": {
+      "resolvedCrossovers": 1
+    },
+    "reason": "Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.",
+    "affectedRoutes": {
+      "crossings": [
+        {
+          "left": {
+            "id": "t-holdrec",
+            "from": "on_hold",
+            "to": "active",
+            "label": "fixed",
+            "collectionIndex": 9,
+            "artifactIndex": 10
+          },
+          "right": {
+            "id": "t-graceexp",
+            "from": "grace",
+            "to": "expired",
+            "label": "Apple: ends",
+            "collectionIndex": 11,
+            "artifactIndex": 12
+          },
+          "point": [
+            1056,
+            198
+          ]
+        }
+      ],
+      "detours": [],
+      "truncated": false
+    },
+    "repair": "Advisory only: this mode places or routes these relationships itself. Report them; do not remove relationships or meaning to reduce crossings."
+  }
+}

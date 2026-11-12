@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Plan Change 1M ↔ 3M",
+    "subtitle": "Ranked by duration: 3M = level 1 (higher), 1M = level 2 · store-native proration, no WeUp credit math on store builds",
+    "output": ".archify/iap-sub-review-20261104-181247/4-plan-change.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "default": { "label": "Call" },
+        "emphasis": { "label": "Upgrade 1M → 3M (immediate)" },
+        "dashed": { "label": "Downgrade 3M → 1M (next renewal)" },
+        "security": { "label": "Internal call" },
+        "return": { "label": "Response" }
+      }
+    }
+  },
+  "participants": [
+    { "id": "app", "type": "frontend", "label": "WeUp App", "sublabel": "info screen" },
+    { "id": "core", "type": "backend", "label": "core-service", "sublabel": "membership chain" },
+    { "id": "payment", "type": "backend", "label": "payment-service", "sublabel": "store adapters" },
+    { "id": "apple", "type": "external", "label": "App Store", "sublabel": "group levels" },
+    { "id": "play", "type": "external", "label": "Google Play", "sublabel": "ReplacementMode" }
+  ],
+  "segments": [
+    { "from": 160, "to": 250, "label": "Button state" },
+    { "from": 260, "to": 620, "label": "Upgrade 1M → 3M" },
+    { "from": 630, "to": 960, "label": "Downgrade 3M → 1M" }
+  ],
+  "messages": [
+    { "id": "plans", "from": "app", "to": "core", "y": 205, "label": "GET plans → CURRENT / UPGRADE / DOWNGRADE", "variant": "default" },
+    { "id": "up-ios", "from": "app", "to": "apple", "y": 300, "label": "iOS: purchase(weup.membership.3m)", "variant": "emphasis", "note": "Same group: Apple upgrades now, refunds unused 1M time" },
+    { "id": "up-and", "from": "app", "to": "play", "y": 355, "label": "Android: changeSubscriptionParam(old 1M, WITH_TIME_PRORATION)", "variant": "emphasis", "note": "Old purchase not on device → block, open Play manage" },
+    { "id": "up-verify", "from": "app", "to": "core", "y": 420, "label": "verify new transaction / token", "variant": "emphasis" },
+    { "id": "up-store", "from": "core", "to": "payment", "y": 455, "label": "verify (Google: linkedPurchaseToken → same chain)", "variant": "security" },
+    { "id": "up-ok", "from": "payment", "to": "core", "y": 490, "label": "new plan, new expiresAt", "variant": "return", "note": "Swap plan_id + scope now · order for the new period" },
+    { "id": "up-done", "from": "core", "to": "app", "y": 560, "label": "200 · CURRENT = 3M", "variant": "return" },
+    { "id": "down-ios", "from": "app", "to": "apple", "y": 680, "label": "iOS: purchase(weup.membership.1m)", "variant": "dashed", "note": "Lower level: Apple applies at next renewal" },
+    { "id": "down-and", "from": "app", "to": "play", "y": 735, "label": "Android: changeSubscriptionParam(old 3M, DEFERRED)", "variant": "dashed" },
+    { "id": "down-notif", "from": "payment", "to": "core", "y": 790, "label": "SUB_PLAN_CHANGED (deferred)", "variant": "dashed", "note": "Set pending_plan_id = 1M · keep 3M access" },
+    { "id": "down-ui", "from": "core", "to": "app", "y": 850, "label": "status: pendingPlanId · 'Takes effect on <date>'", "variant": "return" },
+    { "id": "down-renew", "from": "payment", "to": "core", "y": 905, "label": "SUB_RENEWED at period end → swap to 1M", "variant": "dashed" }
+  ],
+  "activations": [
+    { "participant": "core", "from": 415, "to": 565, "type": "backend" },
+    { "participant": "core", "from": 785, "to": 910, "type": "backend" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Upgrade 1M → 3M", "items": ["Apple: immediate, prorated refund of remaining 1M", "Google: WITH_TIME_PRORATION, remaining time credited", "WeUp: new plan + scope immediately"] },
+    { "dot": "amber", "title": "Downgrade 3M → 1M", "items": ["Apple: automatic at next renewal", "Google: DEFERRED", "WeUp: pending_plan_id until SUB_RENEWED"] },
+    { "dot": "rose", "title": "Guards", "items": ["Never start a 2nd Google subscription (must pass old purchase)", "Payoo / WeUp upgrade endpoint rejects store memberships", "Cancel = Manage subscription deep link"] }
+  ]
+}

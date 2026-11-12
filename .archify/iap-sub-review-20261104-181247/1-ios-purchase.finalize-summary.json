@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "sequence",
+  "quality": "showcase",
+  "specification": {
+    "path": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/ios.json",
+    "sha256": "12dde34ba971108b8911a52e51d75dbcbd79bdebcb298d5552e68cafed7284f8",
+    "bytes": 6754
+  },
+  "artifact": {
+    "path": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/1-ios-purchase.html",
+    "sha256": "436d53e20aa84759c491f70b495008f6e21012f3d16e0d965ee2d1b124864b2b",
+    "bytes": 845257
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/1-ios-purchase.finalize.json",
+    "summaryReceipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/1-ios-purchase.finalize-summary.json",
+    "browserCheckReceipt": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/1-ios-purchase.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-04T11:14:08.225Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 1489,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

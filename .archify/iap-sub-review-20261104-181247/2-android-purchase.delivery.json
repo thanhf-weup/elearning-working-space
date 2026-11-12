@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "dcb6a9c9-e534-48c7-a25b-89949abb4a37",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/android.json",
+  "output": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/2-android-purchase.html",
+  "specification": {
+    "sha256": "aa97d7ef7cc89641ea5bac334c6f7a84d46d6770fceb310c38fa9da99a310a27",
+    "bytes": 5561
+  },
+  "artifact": {
+    "sha256": "4531376fb9947ac7d20c7a0414ba4c310aa6bd50c7aa8bfc69688e043ce4c65f",
+    "bytes": 847557
+  }
+}

@@ -1,0 +1,283 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "iOS IAP Subscription Flow",
+    "subtitle": "WeUp mobile app ↔ core-service ↔ payment-service ↔ App Store (StoreKit 2 + App Store Server API)",
+    "output": ".archify/sequence-iap-sub-ios-20261102-173117/iap-subscription-ios.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "default": {
+          "label": "Exists today (reused from one-time IAP)"
+        },
+        "emphasis": {
+          "label": "New or changed for subscriptions"
+        },
+        "security": {
+          "label": "Internal call (X-Internal-Service-Key)"
+        },
+        "dashed": {
+          "label": "Async: store webhook / RabbitMQ"
+        },
+        "return": {
+          "label": "Response"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "WeUp Mobile App",
+      "sublabel": "Flutter · in_app_purchase"
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "core-service",
+      "sublabel": "users · plans · memberships"
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "payment-service",
+      "sublabel": "store API adapter"
+    },
+    {
+      "id": "mq",
+      "type": "messagebus",
+      "label": "RabbitMQ",
+      "sublabel": "payment.events"
+    },
+    {
+      "id": "apple",
+      "type": "external",
+      "label": "Apple App Store",
+      "sublabel": "StoreKit 2 · Server API"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 320,
+      "label": "1 · Load paywall"
+    },
+    {
+      "from": 330,
+      "to": 755,
+      "label": "2 · Purchase + verify + grant"
+    },
+    {
+      "from": 765,
+      "to": 1102,
+      "label": "3 · Lifecycle (renew, cancel, expire, refund)"
+    }
+  ],
+  "messages": [
+    {
+      "id": "get-plans",
+      "from": "app",
+      "to": "core",
+      "y": 205,
+      "label": "GET /subscription/plans",
+      "variant": "emphasis",
+      "note": "NEW: each plan returns iapProductId + storeLevel"
+    },
+    {
+      "id": "query-products",
+      "from": "app",
+      "to": "apple",
+      "y": 260,
+      "label": "Product.products([SKUs])",
+      "variant": "default"
+    },
+    {
+      "id": "store-prices",
+      "from": "apple",
+      "to": "app",
+      "y": 292,
+      "label": "localized price + period",
+      "variant": "return",
+      "note": "Paywall shows store price + Apple 3.1.2 disclosure"
+    },
+    {
+      "id": "buy",
+      "from": "app",
+      "to": "apple",
+      "y": 375,
+      "label": "purchase(SKU, appAccountToken=userId)",
+      "variant": "emphasis",
+      "note": "NEW: confirm sheet starts a real purchase"
+    },
+    {
+      "id": "signed-tx",
+      "from": "apple",
+      "to": "app",
+      "y": 430,
+      "label": "signed Transaction (transactionId)",
+      "variant": "return"
+    },
+    {
+      "id": "verify",
+      "from": "app",
+      "to": "core",
+      "y": 465,
+      "label": "POST /iap/apple/verify {productType: subscription}",
+      "variant": "emphasis"
+    },
+    {
+      "id": "core-verify",
+      "from": "core",
+      "to": "payment",
+      "y": 500,
+      "label": "POST /payments/iap/apple/verify",
+      "variant": "security"
+    },
+    {
+      "id": "get-tx",
+      "from": "payment",
+      "to": "apple",
+      "y": 535,
+      "label": "getTransactionInfo + getAllSubscriptionStatuses",
+      "variant": "emphasis",
+      "note": "Prod → Sandbox fallback already shipped (B1)"
+    },
+    {
+      "id": "tx-info",
+      "from": "apple",
+      "to": "payment",
+      "y": 590,
+      "label": "expiresDate, originalTransactionId, autoRenew",
+      "variant": "return"
+    },
+    {
+      "id": "verified",
+      "from": "payment",
+      "to": "core",
+      "y": 625,
+      "label": "verified subscription",
+      "variant": "return",
+      "note": "Core: check appAccountToken = user, upsert membership chain, order + iap_transaction"
+    },
+    {
+      "id": "granted",
+      "from": "core",
+      "to": "app",
+      "y": 690,
+      "label": "200 membership active",
+      "variant": "return"
+    },
+    {
+      "id": "finish",
+      "from": "app",
+      "to": "apple",
+      "y": 725,
+      "label": "transaction.finish()",
+      "variant": "default"
+    },
+    {
+      "id": "asn",
+      "from": "apple",
+      "to": "payment",
+      "y": 810,
+      "label": "Server Notification V2 (JWS)",
+      "variant": "dashed",
+      "note": "DID_RENEW, DID_CHANGE_RENEWAL_STATUS, EXPIRED, REFUND…"
+    },
+    {
+      "id": "reread",
+      "from": "payment",
+      "to": "apple",
+      "y": 882,
+      "label": "re-read getAllSubscriptionStatuses",
+      "variant": "emphasis"
+    },
+    {
+      "id": "status",
+      "from": "apple",
+      "to": "payment",
+      "y": 914,
+      "label": "latest state",
+      "variant": "return"
+    },
+    {
+      "id": "publish",
+      "from": "payment",
+      "to": "mq",
+      "y": 949,
+      "label": "payment.iap.notified (SUB_*)",
+      "variant": "dashed",
+      "note": "NEW: subscription types + expiresAt in contract v2"
+    },
+    {
+      "id": "consume",
+      "from": "mq",
+      "to": "core",
+      "y": 1007,
+      "label": "handle-iap-notification",
+      "variant": "dashed",
+      "note": "NEW: extend expires_at / auto_renew / revoke"
+    },
+    {
+      "id": "status-refresh",
+      "from": "app",
+      "to": "core",
+      "y": 1067,
+      "label": "GET /subscription/status",
+      "variant": "default"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "core",
+      "from": 460,
+      "to": 695,
+      "type": "backend"
+    },
+    {
+      "participant": "payment",
+      "from": 495,
+      "to": 630,
+      "type": "backend"
+    },
+    {
+      "participant": "payment",
+      "from": 780,
+      "to": 954,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Already in place",
+      "items": [
+        "StorePurchaseCoordinator, restore (AppStore.sync), transaction.finish",
+        "core → payment verify chain, X-Internal-Service-Key",
+        "ASN V2 webhook + JWS verify, Prod → Sandbox fallback",
+        "RabbitMQ payment.events plumbing"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "To build",
+      "items": [
+        "ASC: subscription group, plans by level, grace period on, Streamlined Purchasing off, prod notification URL",
+        "payment: subscription verify, SUB_* mapping, idempotency on notificationUUID, contract v2",
+        "core: productType subscription, store columns on user_memberships, SUB_* handler",
+        "app: store price on paywall, real buy, Manage subscription link, 3.1.2 disclosure"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Rules",
+      "items": [
+        "Renewal webhooks carry no user: resolve the user by originalTransactionId",
+        "Always re-read state from Apple; a notification only signals a change",
+        "Active Payoo/admin membership blocks a store purchase"
+      ]
+    }
+  ]
+}

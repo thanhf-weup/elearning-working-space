@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "iOS Subscription Purchase & Renewal",
+    "subtitle": "Plan SKU from subscription_plans.app_store_product_id · weup.membership.1m (level 2) / .3m (level 1)",
+    "output": ".archify/iap-sub-review-20261104-181247/1-ios-purchase.html",
+    "quality_profile": "showcase",
+    "legend": {
+      "entries": {
+        "default": {
+          "label": "Exists today (one-time IAP)"
+        },
+        "emphasis": {
+          "label": "New / changed for subscriptions"
+        },
+        "security": {
+          "label": "Internal call (X-Internal-Service-Key)"
+        },
+        "dashed": {
+          "label": "Async: Server Notification / RabbitMQ"
+        },
+        "return": {
+          "label": "Response"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "WeUp App",
+      "sublabel": "Flutter · StoreKit 2"
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "core-service",
+      "sublabel": "plans · memberships"
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "payment-service",
+      "sublabel": "App Store adapter"
+    },
+    {
+      "id": "mq",
+      "type": "messagebus",
+      "label": "RabbitMQ",
+      "sublabel": "payment.events"
+    },
+    {
+      "id": "apple",
+      "type": "external",
+      "label": "App Store",
+      "sublabel": "StoreKit · Server API"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 320,
+      "label": "1 · Paywall"
+    },
+    {
+      "from": 330,
+      "to": 780,
+      "label": "2 · Purchase → verify → grant"
+    },
+    {
+      "from": 790,
+      "to": 1164,
+      "label": "3 · Renewal / lifecycle"
+    }
+  ],
+  "messages": [
+    {
+      "id": "plans",
+      "from": "app",
+      "to": "core",
+      "y": 200,
+      "label": "GET /subscription/plans",
+      "variant": "emphasis",
+      "note": "+ appStoreProductId, storeLevel, buttonAction, currency"
+    },
+    {
+      "id": "products",
+      "from": "app",
+      "to": "apple",
+      "y": 255,
+      "label": "Product.products([SKUs])",
+      "variant": "default"
+    },
+    {
+      "id": "prices",
+      "from": "apple",
+      "to": "app",
+      "y": 287,
+      "label": "localized price + period",
+      "variant": "return"
+    },
+    {
+      "id": "buy",
+      "from": "app",
+      "to": "apple",
+      "y": 375,
+      "label": "purchase(SKU, appAccountToken=userId)",
+      "variant": "emphasis",
+      "note": "Guard: no active Payoo/admin membership"
+    },
+    {
+      "id": "tx",
+      "from": "apple",
+      "to": "app",
+      "y": 430,
+      "label": "signed Transaction",
+      "variant": "return"
+    },
+    {
+      "id": "verify",
+      "from": "app",
+      "to": "core",
+      "y": 465,
+      "label": "POST /iap/apple/verify {productType: subscription}",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pverify",
+      "from": "core",
+      "to": "payment",
+      "y": 500,
+      "label": "POST /payments/iap/apple/verify",
+      "variant": "security"
+    },
+    {
+      "id": "getinfo",
+      "from": "payment",
+      "to": "apple",
+      "y": 535,
+      "label": "getTransactionInfo + getAllSubscriptionStatuses",
+      "variant": "emphasis",
+      "note": "Prod → Sandbox fallback · reject revocationDate"
+    },
+    {
+      "id": "info",
+      "from": "apple",
+      "to": "payment",
+      "y": 590,
+      "label": "expiresDate, originalTransactionId, autoRenew",
+      "variant": "return"
+    },
+    {
+      "id": "verified",
+      "from": "payment",
+      "to": "core",
+      "y": 625,
+      "label": "verified subscription",
+      "variant": "return",
+      "note": "owner = appAccountToken · plan by SKU · upsert membership chain (originalTransactionId) · order per period"
+    },
+    {
+      "id": "ok",
+      "from": "core",
+      "to": "app",
+      "y": 705,
+      "label": "200 membership active",
+      "variant": "return"
+    },
+    {
+      "id": "finish",
+      "from": "app",
+      "to": "apple",
+      "y": 740,
+      "label": "transaction.finish()",
+      "variant": "default"
+    },
+    {
+      "id": "renewtx",
+      "from": "apple",
+      "to": "app",
+      "y": 830,
+      "label": "Transaction.updates (renewal / upgrade)",
+      "variant": "dashed",
+      "note": "No saved context → verify by SKU only"
+    },
+    {
+      "id": "reverify",
+      "from": "app",
+      "to": "core",
+      "y": 885,
+      "label": "verify (idempotent) → finish",
+      "variant": "emphasis"
+    },
+    {
+      "id": "asn",
+      "from": "apple",
+      "to": "payment",
+      "y": 925,
+      "label": "Server Notification V2",
+      "variant": "dashed",
+      "note": "DID_RENEW · DID_CHANGE_RENEWAL_STATUS · DID_FAIL_TO_RENEW · EXPIRED · REFUND"
+    },
+    {
+      "id": "reread",
+      "from": "payment",
+      "to": "apple",
+      "y": 1009,
+      "label": "re-read getAllSubscriptionStatuses",
+      "variant": "emphasis"
+    },
+    {
+      "id": "state",
+      "from": "apple",
+      "to": "payment",
+      "y": 1041,
+      "label": "latest state",
+      "variant": "return"
+    },
+    {
+      "id": "pub",
+      "from": "payment",
+      "to": "mq",
+      "y": 1076,
+      "label": "payment.iap.notified (SUB_*)",
+      "variant": "dashed",
+      "note": "dedupe notificationUUID · contract v2"
+    },
+    {
+      "id": "consume",
+      "from": "mq",
+      "to": "core",
+      "y": 1134,
+      "label": "extend / grace / auto_renew / revoke",
+      "variant": "dashed"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "core",
+      "from": 460,
+      "to": 710,
+      "type": "backend"
+    },
+    {
+      "participant": "payment",
+      "from": 495,
+      "to": 630,
+      "type": "backend"
+    },
+    {
+      "participant": "payment",
+      "from": 920,
+      "to": 1081,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Keys",
+      "items": [
+        "User binding: appAccountToken = WeUp userId",
+        "Chain key: originalTransactionId (stable across renewals + upgrades)",
+        "Period id: transactionId (one order each)"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Store settings in place",
+      "items": [
+        "Group WeUp Membership: 3M level 1, 1M level 2",
+        "Grace 16 days (Sandbox only for now)",
+        "Notifications: prod api.weupbook.vn · sandbox staging"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Edge rules",
+      "items": [
+        "Streamlined Purchasing ON: purchase without token is held 'unbound' until the logged-in user verifies in app",
+        "Cancel = auto-renew off; access until expires_at",
+        "Refund / revoke → terminate now"
+      ]
+    }
+  ]
+}

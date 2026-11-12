@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "12df8907-766f-4c21-a004-b1ec7eeb1e4b",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/plan-change.json",
+  "output": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/4-plan-change.html",
+  "specification": {
+    "sha256": "25fdcf65b96bf840aea8b19c1edf357ad151fda11b6e26021c8fe34340d0caf3",
+    "bytes": 4161
+  },
+  "artifact": {
+    "sha256": "70bdf0e12098bc42aa993aa51420b8c6740a5add7bc71b67bd12032d8819fa86",
+    "bytes": 839277
+  }
+}

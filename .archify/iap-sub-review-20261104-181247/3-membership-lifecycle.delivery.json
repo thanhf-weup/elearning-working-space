@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "fe060332-660b-454f-ab7f-477af2e68b6a",
+  "status": "current",
+  "command": "deliver",
+  "type": "lifecycle",
+  "input": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/lifecycle.json",
+  "output": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/iap-sub-review-20261104-181247/3-membership-lifecycle.html",
+  "specification": {
+    "sha256": "af8e7e49610e852f7adfaf2bb5fefc318364c1c6d7fcc0bf7367010dd937ccb1",
+    "bytes": 4970
+  },
+  "artifact": {
+    "sha256": "2ecb2785b716f9bc287f3af8e2975a9d0447af8dc01604a98420da319012c728",
+    "bytes": 854491
+  }
+}

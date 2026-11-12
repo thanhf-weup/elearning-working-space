@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "940e7ddc-0747-44f3-8f9f-e805c2ba2764",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/sequence-iap-sub-ios-20261102-173117/candidate.json",
+  "output": "/Users/thanhtruongtan/Weup_Workspace/elearning-working-space/.archify/sequence-iap-sub-ios-20261102-173117/iap-subscription-ios.html",
+  "specification": {
+    "sha256": "e1bfd18d2cdb3bcc944878de10e17f380b639cd7930e2f88093bb4f6bada129f",
+    "bytes": 7009
+  },
+  "artifact": {
+    "sha256": "907e10b613e8472f49c378f8b7903f75b734b48186db021e5ca384a85ae14383",
+    "bytes": 845302
+  }
+}

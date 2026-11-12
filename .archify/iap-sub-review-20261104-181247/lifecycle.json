@@ -1,0 +1,226 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Store Membership Lifecycle",
+    "subtitle": "user_memberships row per store chain (source = apple | google) · store_state + auto_renew + expires_at",
+    "output": ".archify/iap-sub-review-20261104-181247/3-membership-lifecycle.html",
+    "quality_profile": "showcase"
+  },
+  "mainPath": [
+    "none",
+    "verifying",
+    "active",
+    "renewal_off",
+    "expired"
+  ],
+  "states": [
+    {
+      "id": "none",
+      "type": "start",
+      "label": "No membership",
+      "sublabel": "or WeUp trial",
+      "step": "01"
+    },
+    {
+      "id": "verifying",
+      "type": "decision",
+      "label": "Verifying",
+      "sublabel": "owner · SKU · channel",
+      "tag": "core grant",
+      "step": "02"
+    },
+    {
+      "id": "active",
+      "type": "success",
+      "label": "Active",
+      "sublabel": "auto_renew = true",
+      "tag": "access on",
+      "step": "03"
+    },
+    {
+      "id": "renewal_off",
+      "type": "waiting",
+      "label": "Renewal off",
+      "sublabel": "user cancelled",
+      "tag": "access on",
+      "step": "04"
+    },
+    {
+      "id": "expired",
+      "type": "neutral",
+      "label": "Expired",
+      "sublabel": "cron revokes enrollments",
+      "tag": "access off",
+      "step": "05"
+    },
+    {
+      "id": "rejected",
+      "type": "failure",
+      "label": "Rejected",
+      "sublabel": "wrong user / Payoo active",
+      "tag": "refund"
+    },
+    {
+      "id": "grace",
+      "type": "waiting",
+      "label": "Grace period",
+      "sublabel": "Apple 16 d · Google 7 d",
+      "tag": "access on"
+    },
+    {
+      "id": "on_hold",
+      "type": "waiting",
+      "label": "Account hold",
+      "sublabel": "Google only",
+      "tag": "access off"
+    },
+    {
+      "id": "pending_change",
+      "type": "active",
+      "label": "Downgrade pending",
+      "sublabel": "pending_plan_id",
+      "tag": "at renewal"
+    },
+    {
+      "id": "revoked",
+      "type": "failure",
+      "label": "Revoked",
+      "sublabel": "refund / revoke",
+      "tag": "terminate now"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "t-buy",
+      "from": "none",
+      "to": "verifying",
+      "label": "buy"
+    },
+    {
+      "id": "t-grant",
+      "from": "verifying",
+      "to": "active",
+      "label": "granted",
+      "variant": "emphasis"
+    },
+    {
+      "id": "t-cancel",
+      "from": "active",
+      "to": "renewal_off",
+      "label": "cancel"
+    },
+    {
+      "id": "t-expire",
+      "from": "renewal_off",
+      "to": "expired",
+      "label": "ends"
+    },
+    {
+      "id": "t-reject",
+      "from": "verifying",
+      "to": "rejected",
+      "label": "fails",
+      "variant": "security"
+    },
+    {
+      "id": "t-reon",
+      "from": "renewal_off",
+      "to": "active",
+      "label": "re-enable"
+    },
+    {
+      "id": "t-billfail",
+      "from": "active",
+      "to": "grace",
+      "label": "billing fails",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-recover",
+      "from": "grace",
+      "to": "active",
+      "label": "recovered"
+    },
+    {
+      "id": "t-hold",
+      "from": "grace",
+      "to": "on_hold",
+      "label": "Google hold",
+      "variant": "dashed"
+    },
+    {
+      "id": "t-holdrec",
+      "from": "on_hold",
+      "to": "active",
+      "label": "fixed"
+    },
+    {
+      "id": "t-holdexp",
+      "from": "on_hold",
+      "to": "expired",
+      "label": "hold ends"
+    },
+    {
+      "id": "t-graceexp",
+      "from": "grace",
+      "to": "expired",
+      "label": "Apple: ends"
+    },
+    {
+      "id": "t-down",
+      "from": "active",
+      "to": "pending_change",
+      "label": "3M → 1M"
+    },
+    {
+      "id": "t-downapply",
+      "from": "pending_change",
+      "to": "active",
+      "label": "renewal"
+    },
+    {
+      "id": "t-refund",
+      "from": "active",
+      "to": "revoked",
+      "label": "refund",
+      "variant": "security"
+    },
+    {
+      "id": "t-resub",
+      "from": "expired",
+      "to": "verifying",
+      "label": "resubscribe"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "One row per chain",
+      "items": [
+        "Renewals extend expires_at on the same row (Active → Active)",
+        "Grant ends an active WeUp trial",
+        "Upgrade 1M → 3M applies immediately (stays Active, new plan)",
+        "One order + iap_transaction per billed period"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Expiry safety",
+      "items": [
+        "Grace: Apple 16 d then expires · Google 7 d then 53 d account hold",
+        "Expiry cron gives store rows with auto_renew a 24 h leeway",
+        "Hourly reconcile re-reads rows close to expiry from the store"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Termination",
+      "items": [
+        "Only refund / revoke ends access early",
+        "Products bought outright are kept",
+        "Learning progress is kept after expiry"
+      ]
+    }
+  ]
+}
