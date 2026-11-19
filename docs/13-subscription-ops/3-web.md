@@ -10,9 +10,9 @@ mà dẫn khách sang tải app.
 
 | Nơi | Trước | Sau |
 |---|---|---|
-| Modal "Đăng ký gói thành viên" (từ badge header, trang Gói đăng ký) | Nút "Chọn gói" → trang thanh toán Payoo; hội viên thì "Nâng cấp ngay" (trừ tiền Payoo) | Nút **"Đăng ký trên ứng dụng"** → màn hình tải app: nút App Store / Google Play; QR trên máy tính; trên điện thoại ưu tiên store của máy |
-| Link cũ `/subscription/checkout?planId=…` | Form thanh toán Payoo | Chuyển về trang chủ và mở màn hình tải app |
-| Trang kết quả thanh toán Payoo thất bại | "Thử lại" → checkout | "Thử lại" → màn hình tải app |
+| Modal "Đăng ký gói thành viên" (từ badge header, trang Gói đăng ký) | Nút "Chọn gói" → trang thanh toán Payoo; hội viên thì "Nâng cấp ngay" (trừ tiền Payoo) | **Một màn hình:** QR App Store / Google Play (máy tính) hoặc nút store (điện thoại, ưu tiên store của máy) ở trên, bảng giá các gói ở dưới. Không còn bước chọn gói |
+| Link cũ `/subscription/checkout?planId=…` | Form thanh toán Payoo | Chuyển về trang chủ và mở modal gói |
+| Trang kết quả thanh toán Payoo thất bại | "Thử lại" → checkout | "Thử lại" → mở modal gói |
 | Profile → Gói đăng ký, khách **Payoo** | "Nâng cấp gói" + "Hủy gia hạn" | **"Xem các gói"** + "Hủy gia hạn" (giữ nguyên) |
 | Profile → Gói đăng ký, khách **App Store / Google Play** | "Hủy gia hạn" (Payoo, backend từ chối) | **"Quản lý gói trên App Store / Google Play"** (mở trang quản lý gói của store) + cảnh báo khi store báo lỗi thanh toán (grace / on hold) |
 
@@ -21,17 +21,17 @@ mà dẫn khách sang tải app.
 ![Trước: trang gói đăng ký](images/3-01-web-truoc-profile.jpg)
 ![Trước: modal gói](images/3-02-web-truoc-modal-goi.jpg)
 
-**Sau: modal gói.** Gói đang dùng bị khoá (1), các gói khác hiện **"Đăng ký trên ứng dụng"** (2).
-
-![Sau: modal gói](images/3-04-web-sau-modal-goi.jpg)
-
-**Sau: màn hình tải app.**
-- QR + nút **App Store** (1) và **Google Play** (2).
-- Thông báo (3) hiện khi khách đang có gói:
+**Sau: modal gói (1 bước).** Gói chỉ mua trong app và QR giống nhau cho mọi gói, nên modal không bắt khách chọn gói trước.
+- Phần trên: **"Mua gói trong ứng dụng WeUp"** với 3 bước (tải app → đăng nhập đúng tài khoản → chọn gói và thanh toán qua store).
+  - Máy tính: 2 mã QR, dưới mỗi mã là badge **App Store** / **Google Play** (bấm vào cả khối cũng mở link store).
+  - Điện thoại: 2 badge tải "App Store" / "Google Play", store của máy đứng trước.
+- Phần dưới: **bảng giá** các gói (tên, thời hạn, giá, nhãn/giảm giá nếu có). Không có nút trên từng gói. Gói khách đang dùng có nhãn **"Gói hiện tại"**.
+- Thông báo màu vàng hiện trên các bước khi khách đang có gói:
   - **Gói Payoo/admin còn hạn:** *"…có thể đăng ký gói mới trên ứng dụng sau khi gói này hết hạn"*. App chặn mua chéo kênh.
   - **Gói store:** *"…Đổi gói ngay trong ứng dụng WeUp"*.
 
-![Sau: tải app](images/3-03-web-sau-tai-app.jpg)
+![Sau: modal gói trên máy tính](images/3-03-web-sau-modal-1-buoc.jpg)
+![Sau: modal gói trên điện thoại](images/3-04-web-sau-modal-1-buoc-mobile.jpg)
 
 **Sau: khách mua qua store.**
 - **"Xem các gói"** (1).
